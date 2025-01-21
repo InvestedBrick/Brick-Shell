@@ -1,0 +1,1 @@
+A simple shell adapted from [Bubble Shell](https://github.com/JoshMcguigan/bubble-shell/) which is mostly a project to learn Rust for me
