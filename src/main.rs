@@ -78,6 +78,32 @@ fn main_shell() {
                     prev_command = None;
                 },
                 "exit" => return,
+                "ls" => {
+                    let files = fs::read_dir(&dir).unwrap();
+                    for file in files {
+                        let file_type = file.as_ref().unwrap().file_type().unwrap();
+                        let file_name = file.unwrap().file_name().into_string().unwrap();
+                        if file_type.is_dir() {
+                            if file_name.starts_with("."){
+                                print!("{}/ ",file_name.purple().bold());
+                            }else {
+                                print!("{}/ ",file_name.blue().bold());
+                            }
+                        }else if file_type.is_file() {
+                            if !file_name.ends_with(".tmp"){
+
+                                if file_name.contains("."){
+                                    print!("{} ",file_name);
+                                }else{
+                                    print!("{} ",file_name.green().bold());
+                                }
+                            }
+                        }else if file_type.is_symlink() {
+                            print!(">{} ",file_name.bright_cyan())
+                        }
+                    }
+                    println!("");
+                },
                 command => {
                     
                     let stdin = prev_command
