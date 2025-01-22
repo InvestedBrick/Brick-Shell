@@ -105,7 +105,7 @@ fn main_shell() {
                 
                 match output {
                     Ok(output) => {prev_command = Some(output);},
-                    Err(e) => {prev_command = None; eprintln!("{}",e);}
+                    Err(_e) => {prev_command = None; eprintln!("Command '{}' was not found!",command.to_string());}
                     }
                 }
             }
