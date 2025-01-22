@@ -1,4 +1,5 @@
-use std::{env, iter};
+use std::vec::IntoIter;
+use std::env;
 use std::io::{stdin, stdout, Write};
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
@@ -20,10 +21,44 @@ fn main_shell() {
         let mut prev_command  = None;
 
         while let Some(command) = commands.next() {
+            let mut command = command.trim();
+            let mut args: IntoIter<String> =  Vec::new().into_iter();
 
-            let mut parts = command.trim().split_whitespace();
-            let command = parts.next().unwrap();
-            let args = parts;
+            if let Some((command_,args_)) = command.split_once(' '){
+                command = command_;
+                let mut result_args: Vec<String> = Vec::new();
+                let mut in_quotes = false;
+                let mut current_arg = String::new();
+
+                for char in args_.chars() {
+                    match char {
+                        '"' => {
+                            in_quotes = !in_quotes;
+                            current_arg.push(char);
+                        }
+                        ' ' => {
+                            if !in_quotes {
+                                if !current_arg.is_empty(){
+                                    result_args.push(current_arg.clone());
+                                    current_arg.clear();
+                                }
+                            }
+                            else {
+                                current_arg.push(char);
+                            }
+                        }
+                        _ => {
+                            current_arg.push(char);
+                        }
+                    }
+                }
+                if !current_arg.is_empty() {
+                    result_args.push(current_arg);
+                }
+
+                args = result_args.into_iter();
+
+            }
         
             match command {
 
@@ -58,10 +93,10 @@ fn main_shell() {
                         // send output to shell stdout
                         Stdio::inherit()
                     };
-                    for arg in args.clone(){
-                        print!("{arg} ");
-                    }
-                    println!("");
+                    //for arg in args.clone(){
+                    //    print!("{arg} ");
+                    //}
+                    //println!("")
                     let output = Command::new(command)
                     .args(args)
                     .stdin(stdin)
