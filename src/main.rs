@@ -5,6 +5,45 @@ use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use users::{get_user_by_uid, get_current_uid};
 use colored::Colorize;
+use std::fs;
+
+fn split_args(command : &str) -> (&str, IntoIter<String>){
+    if let Some((command_,args_)) = command.split_once(' '){
+        let mut result_args: Vec<String> = Vec::new();
+        let mut in_quotes = false;
+        let mut current_arg = String::new();
+
+        for char in args_.chars() {
+            match char {
+                '"' => {
+                    in_quotes = !in_quotes;
+                    current_arg.push(char);
+                }
+                ' ' => {
+                    if !in_quotes {
+                        if !current_arg.is_empty(){
+                            result_args.push(current_arg.clone());
+                            current_arg.clear();
+                        }
+                    }
+                    else {
+                        current_arg.push(char);
+                    }
+                }
+                _ => {
+                    current_arg.push(char);
+                }
+            }
+        }
+        if !current_arg.is_empty() {
+            result_args.push(current_arg);
+        }
+
+        return (command_,result_args.into_iter());
+    }
+    else {return (command,Vec::new().into_iter());}
+
+}
 
 fn main_shell() {
     let user = get_user_by_uid(get_current_uid()).unwrap();
@@ -21,44 +60,7 @@ fn main_shell() {
         let mut prev_command  = None;
 
         while let Some(command) = commands.next() {
-            let mut command = command.trim();
-            let mut args: IntoIter<String> =  Vec::new().into_iter();
-
-            if let Some((command_,args_)) = command.split_once(' '){
-                command = command_;
-                let mut result_args: Vec<String> = Vec::new();
-                let mut in_quotes = false;
-                let mut current_arg = String::new();
-
-                for char in args_.chars() {
-                    match char {
-                        '"' => {
-                            in_quotes = !in_quotes;
-                            current_arg.push(char);
-                        }
-                        ' ' => {
-                            if !in_quotes {
-                                if !current_arg.is_empty(){
-                                    result_args.push(current_arg.clone());
-                                    current_arg.clear();
-                                }
-                            }
-                            else {
-                                current_arg.push(char);
-                            }
-                        }
-                        _ => {
-                            current_arg.push(char);
-                        }
-                    }
-                }
-                if !current_arg.is_empty() {
-                    result_args.push(current_arg);
-                }
-
-                args = result_args.into_iter();
-
-            }
+            let (command,args) = split_args(command.trim());
         
             match command {
 
