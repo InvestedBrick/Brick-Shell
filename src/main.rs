@@ -1,12 +1,11 @@
-use std::env;
+use std::{env, iter};
 use std::io::{stdin, stdout, Write};
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use users::{get_user_by_uid, get_current_uid};
 use colored::Colorize;
 
-
-fn main() {
+fn main_shell() {
     let user = get_user_by_uid(get_current_uid()).unwrap();
     let mut dir : String = String::new();
     loop {
@@ -59,7 +58,10 @@ fn main() {
                         // send output to shell stdout
                         Stdio::inherit()
                     };
-
+                    for arg in args.clone(){
+                        print!("{arg} ");
+                    }
+                    println!("");
                     let output = Command::new(command)
                     .args(args)
                     .stdin(stdin)
@@ -77,4 +79,25 @@ fn main() {
             final_cmd.wait().unwrap();
         }   
     }
+}
+
+
+fn main() {
+    if env::var("LAUNCHED_IN_TERMINAL").is_ok() {
+        main_shell();
+        return;
+    }
+
+    let current_exe = env::current_exe().unwrap();
+
+    let result = Command::new("gnome-terminal")
+        .arg("--")
+        .arg(format!("{}",current_exe.to_str().unwrap()))
+        .env("LAUNCHED_IN_TERMINAL", "1")
+        .spawn();
+
+        match result {
+            Ok(_) => println!("Launched in a new terminal successfully!"),
+            Err(e) => eprintln!("Failed to launch a new terminal: {}", e),
+        }
 }
