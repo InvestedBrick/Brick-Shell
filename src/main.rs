@@ -135,7 +135,6 @@ fn main_shell() {
                             Stdio::inherit()
                         };
                     
-                    println!("{:?}",args);
                     let output = Command::new(command)
                     .args(args)
                     .stdin(stdin)
