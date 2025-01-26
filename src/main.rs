@@ -5,8 +5,9 @@ use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use users::{get_user_by_uid, get_current_uid};
 use colored::Colorize;
-use std::fs;
-
+use std::fs::{self};
+use os_pipe::pipe;
+use dirs::home_dir;
 fn split_args(command : &str) -> (&str, IntoIter<String>){
     if let Some((command_,args_)) = command.split_once(' '){
         let mut result_args: Vec<String> = Vec::new();
@@ -57,7 +58,7 @@ fn main_shell() {
         stdin().read_line(&mut input).unwrap();
         
         let mut commands = input.trim().split(" | ").peekable();
-        let mut prev_command  = None;
+        let mut prev_command:Option<Child>  = None;
 
         while let Some(command) = commands.next() {
             let (command,args) = split_args(command.trim());
@@ -65,9 +66,7 @@ fn main_shell() {
             match command {
 
                 "cd" => {
-                    let mut home : String = "/home/".to_owned();
-                    home.push_str(user.name().to_str().unwrap());
-                    let new_dir = args.peekable().peek().map_or(home , |x| x.to_string());
+                    let new_dir = args.peekable().peek().map_or(home_dir().unwrap().display().to_string() , |x| x.to_string());
 
                     let path = Path::new(&new_dir);
 
@@ -80,29 +79,48 @@ fn main_shell() {
                 "exit" => return,
                 "ls" => {
                     let files = fs::read_dir(&dir).unwrap();
+                    let mut ls_output = String::new();
                     for file in files {
                         let file_type = file.as_ref().unwrap().file_type().unwrap();
                         let file_name = file.unwrap().file_name().into_string().unwrap();
                         if file_type.is_dir() {
                             if file_name.starts_with("."){
-                                print!("{}/ ",file_name.purple().bold());
+                                ls_output.push_str(&format!("{}/\n",file_name.purple().bold()));
                             }else {
-                                print!("{}/ ",file_name.blue().bold());
+                                ls_output.push_str(&format!("{}/\n",file_name.blue().bold()));
                             }
                         }else if file_type.is_file() {
                             if !file_name.ends_with(".tmp"){
 
                                 if file_name.contains("."){
-                                    print!("{} ",file_name);
+                                    ls_output.push_str(&format!("{}\n",file_name));
                                 }else{
-                                    print!("{} ",file_name.green().bold());
+                                    ls_output.push_str(&format!("{}\n",file_name.green().bold()));
                                 }
                             }
                         }else if file_type.is_symlink() {
-                            print!(">{} ",file_name.bright_cyan())
+                            ls_output.push_str(&format!(">{}\n",file_name.bright_cyan()));
                         }
                     }
-                    println!("");
+                    // No pipe -> print
+                    if commands.peek().is_none() {
+                        print!("{}",ls_output);
+                    }else{
+                        let (reader,mut writer) = pipe().expect("Pipe failed");
+                        writer.write_all(ls_output.as_bytes()).unwrap();
+                        
+                        drop(writer);
+
+                        prev_command = Some(
+                            Command::new("cat") 
+                            .stdin(Stdio::from(reader))
+                            .stdout(Stdio::piped())
+                            .spawn()
+                            .expect("Failed to spawn command")
+                        );
+
+                        
+                    }
                 },
                 command => {
                     
@@ -111,20 +129,13 @@ fn main_shell() {
                             Stdio::inherit(),
                             |output: Child| Stdio::from(output.stdout.unwrap())
                         );
-
                     let stdout = if commands.peek().is_some() {
-                        // there is another command piped behind this one
-                        // prepare to send output to the next command
-                        Stdio::piped()
-                    } else {
-                        // there are no more commands piped behind this one
-                        // send output to shell stdout
-                        Stdio::inherit()
-                    };
-                    //for arg in args.clone(){
-                    //    print!("{arg} ");
-                    //}
-                    //println!("")
+                            Stdio::piped()
+                        } else {
+                            Stdio::inherit()
+                        };
+                    
+                    println!("{:?}",args);
                     let output = Command::new(command)
                     .args(args)
                     .stdin(stdin)
@@ -133,7 +144,7 @@ fn main_shell() {
                 
                 match output {
                     Ok(output) => {prev_command = Some(output);},
-                    Err(_e) => {prev_command = None; eprintln!("Command '{}' was not found!",command.to_string());}
+                    Err(_e) => {prev_command = None; if command.to_string() != "" {eprintln!("Command '{}' was not found!",command.to_string())};}
                     }
                 }
             }
