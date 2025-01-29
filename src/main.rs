@@ -1,13 +1,18 @@
 use std::vec::IntoIter;
 use std::env;
-use std::io::{stdin, stdout, Write};
+use std::io::Write;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
+use autocomplete::FileCompleter;
+use rustyline::history::FileHistory;
+use rustyline::Editor;
 use users::{get_user_by_uid, get_current_uid};
 use colored::Colorize;
-use std::fs::{self};
+use std::fs;
 use os_pipe::pipe;
 use dirs::home_dir;
+mod autocomplete;
+
 fn split_args(command : &str) -> (&str, IntoIter<String>){
     if let Some((command_,args_)) = command.split_once(' '){
         let mut result_args: Vec<String> = Vec::new();
@@ -49,13 +54,17 @@ fn split_args(command : &str) -> (&str, IntoIter<String>){
 fn main_shell() {
     let user = get_user_by_uid(get_current_uid()).unwrap();
     let mut dir : String = String::new();
+
+    let h = FileCompleter {};
+    let mut rl = Editor::new().unwrap();
+    rl.set_helper(Some(h));
+    
     loop {
         dir = env::current_dir().unwrap().display().to_string();
-        print!("({})[{}] > ",user.name().to_str().unwrap().green().bold(),dir.blue().bold());
-        stdout().flush().unwrap();
+        let prompt = format!("({})[{}] > ",user.name().to_str().unwrap().green().bold(),dir.blue().bold());
 
-        let mut input = String::new();
-        stdin().read_line(&mut input).unwrap();
+        let input = rl.readline(&prompt).unwrap();
+        //stdin().read_line(&mut input).unwrap();
         
         let mut commands = input.trim().split(" | ").peekable();
         let mut prev_command:Option<Child>  = None;
