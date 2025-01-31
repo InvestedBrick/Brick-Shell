@@ -55,6 +55,8 @@ fn main_shell() {
     let user = get_user_by_uid(get_current_uid()).unwrap();
     let mut dir : String = String::new();
 
+    let history = FileHistory::new();
+
     let h = FileCompleter {};
     let mut rl = Editor::new().unwrap();
     rl.set_helper(Some(h));
