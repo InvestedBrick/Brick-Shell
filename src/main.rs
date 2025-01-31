@@ -55,19 +55,22 @@ fn main_shell() {
     let user = get_user_by_uid(get_current_uid()).unwrap();
     let mut dir : String = String::new();
 
-    let history = FileHistory::new();
+    //let history = FileHistory::new();
 
     let h = FileCompleter {};
     let mut rl = Editor::new().unwrap();
     rl.set_helper(Some(h));
     
+    if rl.load_history("brick_shell_history.txt").is_err(){
+        println!("Starting new history...");
+    }
     loop {
         dir = env::current_dir().unwrap().display().to_string();
         let prompt = format!("({})[{}] > ",user.name().to_str().unwrap().green().bold(),dir.blue().bold());
 
         let input = rl.readline(&prompt).unwrap();
         //stdin().read_line(&mut input).unwrap();
-        
+        rl.add_history_entry(&input).unwrap();
         let mut commands = input.trim().split(" | ").peekable();
         let mut prev_command:Option<Child>  = None;
 
@@ -87,7 +90,7 @@ fn main_shell() {
 
                     prev_command = None;
                 },
-                "exit" => return,
+                "exit" => {rl.append_history("brick_shell_history.txt").unwrap();return;},
                 "ls" => {
                     let files = fs::read_dir(&dir).unwrap();
                     let mut ls_output = String::new();
@@ -163,6 +166,8 @@ fn main_shell() {
             final_cmd.wait().unwrap();
         }   
     }
+
+    
 }
 
 
