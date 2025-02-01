@@ -22,7 +22,6 @@ fn split_args(command : &str) -> (&str, IntoIter<String>){
             match char {
                 '"' => {
                     in_quotes = !in_quotes;
-                    //current_arg.push(char);
                 }
                 ' ' => {
                     if !in_quotes {
@@ -52,7 +51,7 @@ fn split_args(command : &str) -> (&str, IntoIter<String>){
 
 fn main_shell() {
     let user = get_user_by_uid(get_current_uid()).unwrap();
-    let mut dir : String = String::new();
+    let mut dir : String;
 
     let hist_dir = "/home/".to_owned() + user.name().to_str().unwrap() + "/brick_shell_history.txt";
     let h = FileCompleter {};
@@ -91,23 +90,30 @@ fn main_shell() {
                 "exit" => {rl.append_history(&hist_dir).unwrap();return;},
                 "clear-history" => {rl.clear_history().unwrap();}
                 "ls" => {
+                    let arg = args.peekable().peek().map_or(String::new(), |x| x.to_string());
+                    let extended = arg == "-e";
+                    let all = arg == "-a";
                     let files = fs::read_dir(&dir).unwrap();
                     let mut ls_output = String::new();
                     for file in files {
                         let file_type = file.as_ref().unwrap().file_type().unwrap();
                         let file_name = file.unwrap().file_name().into_string().unwrap();
+                        let starts_with_dot = file_name.starts_with(".");
                         if file_type.is_dir() {
-                            if file_name.starts_with("."){
+                            if starts_with_dot && (extended || all){
                                 ls_output.push_str(&format!("{}/\n",file_name.purple().bold()));
-                            }else {
+                            }else if !starts_with_dot{
                                 ls_output.push_str(&format!("{}/\n",file_name.blue().bold()));
                             }
                         }else if file_type.is_file() {
-                            if !file_name.ends_with(".tmp"){
-
-                                if file_name.contains("."){
+                            if !file_name.ends_with(".tmp") || all{
+                                
+                                if starts_with_dot && (extended || all){
                                     ls_output.push_str(&format!("{}\n",file_name));
-                                }else{
+                                }
+                                else if !starts_with_dot && file_name.contains("."){
+                                    ls_output.push_str(&format!("{}\n",file_name));
+                                }else if !starts_with_dot {
                                     ls_output.push_str(&format!("{}\n",file_name.green().bold()));
                                 }
                             }
