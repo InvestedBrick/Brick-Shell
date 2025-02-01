@@ -4,7 +4,6 @@ use std::io::Write;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use autocomplete::FileCompleter;
-use rustyline::history::FileHistory;
 use rustyline::Editor;
 use users::{get_user_by_uid, get_current_uid};
 use colored::Colorize;
@@ -23,7 +22,7 @@ fn split_args(command : &str) -> (&str, IntoIter<String>){
             match char {
                 '"' => {
                     in_quotes = !in_quotes;
-                    current_arg.push(char);
+                    //current_arg.push(char);
                 }
                 ' ' => {
                     if !in_quotes {
@@ -55,13 +54,12 @@ fn main_shell() {
     let user = get_user_by_uid(get_current_uid()).unwrap();
     let mut dir : String = String::new();
 
-    //let history = FileHistory::new();
-
+    let hist_dir = "/home/".to_owned() + user.name().to_str().unwrap() + "/brick_shell_history.txt";
     let h = FileCompleter {};
     let mut rl = Editor::new().unwrap();
     rl.set_helper(Some(h));
     
-    if rl.load_history("brick_shell_history.txt").is_err(){
+    if rl.load_history(&hist_dir).is_err(){
         println!("Starting new history...");
     }
     loop {
@@ -90,7 +88,8 @@ fn main_shell() {
 
                     prev_command = None;
                 },
-                "exit" => {rl.append_history("brick_shell_history.txt").unwrap();return;},
+                "exit" => {rl.append_history(&hist_dir).unwrap();return;},
+                "clear-history" => {rl.clear_history().unwrap();}
                 "ls" => {
                     let files = fs::read_dir(&dir).unwrap();
                     let mut ls_output = String::new();
