@@ -9,7 +9,6 @@ use rustyline::validate::Validator;
 use std::borrow::Cow::{self, Borrowed};
 use std::env;
 use std::fs;
-
 pub struct FileCompleter;
 
 impl Completer for FileCompleter {
@@ -18,19 +17,29 @@ impl Completer for FileCompleter {
     fn complete(&self, line: &str, pos: usize, _ctx: &Context) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
         // Find the position where the filename starts
         let start = line[..pos].rfind(' ').map_or(0, |i| i + 1);
-        let input = &line[start..pos];
-
+        let mut input = &line[start..pos];
+        
         // Get the current directory
-        let dir = env::current_dir().unwrap().display().to_string();
-
-        // Get matching file names in the current directory
-        let files = match fs::read_dir(dir) {
+        let mut first = String::new();
+        let mut dir = env::current_dir().unwrap().display().to_string();
+        if input.contains("/"){
+            let (first_part,second_part) = input.split_at(input.rfind('/').unwrap());
+            input = &second_part[1..];
+            first = first_part.to_owned() + "/";
+            dir = dir + "/" + &first;
+        }
+        // Get matching file names in the target directory
+        let files = match fs::read_dir(&dir) {
             Ok(entries) => entries
                 .filter_map(|entry| {
                     entry.ok().and_then(|e| {
                         let file_name = e.file_name().to_string_lossy().to_string();
                         if file_name.starts_with(input) {
-                            Some(file_name)
+                            if e.file_type().unwrap().is_dir(){
+                                Some(first.to_owned() + &file_name + "/")
+                            }else{
+                                Some(first.to_owned() + &file_name)
+                            }
                         } else {
                             None
                         }
