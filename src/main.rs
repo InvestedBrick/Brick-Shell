@@ -10,6 +10,7 @@ use colored::Colorize;
 use std::fs;
 use os_pipe::pipe;
 use dirs::home_dir;
+use rustyline::error::ReadlineError;
 mod autocomplete;
 
 fn split_args(command : &str) -> (&str, IntoIter<String>){
@@ -53,19 +54,33 @@ fn main_shell() {
     let user = get_user_by_uid(get_current_uid()).unwrap();
     let mut dir : String;
 
-    let hist_dir = "/home/".to_owned() + user.name().to_str().unwrap() + "/brick_shell_history.txt";
+    let hist_file = "/home/".to_owned() + user.name().to_str().unwrap() + "/brick_shell_history.txt";
     let h = FileCompleter {};
     let mut rl = Editor::new().unwrap();
     rl.set_helper(Some(h));
     
-    if rl.load_history(&hist_dir).is_err(){
+    if rl.load_history(&hist_file).is_err(){
         println!("Starting new history...");
     }
     loop {
         dir = env::current_dir().unwrap().display().to_string();
         let prompt = format!("({})[{}] > ",user.name().to_str().unwrap().green().bold(),dir.blue().bold());
 
-        let input = rl.readline(&prompt).unwrap();
+        let line =  rl.readline(&prompt);
+
+        let input;
+        match line {
+            Ok(line) => {
+                input = line;
+            },
+            Err(ReadlineError::Interrupted) => {
+                continue;
+            }
+            Err(_) => {
+                continue;
+            }
+        };
+            
         //stdin().read_line(&mut input).unwrap();
         rl.add_history_entry(&input).unwrap();
         let mut commands = input.trim().split(" | ").peekable();
@@ -87,8 +102,14 @@ fn main_shell() {
 
                     prev_command = None;
                 },
-                "exit" => {rl.append_history(&hist_dir).unwrap();return;},
-                "clear-history" => {rl.clear_history().unwrap();}
+                "exit" => {rl.append_history(&hist_file).unwrap();return;},
+                "clear-history" => {
+                    if rl.clear_history().is_err() {
+                        println!("Failed to clear history");
+                    }
+                    
+                    fs::remove_file(&hist_file).unwrap();
+                }
                 "ls" => {
                     let arg = args.peekable().peek().map_or(String::new(), |x| x.to_string());
                     let extended = arg == "-e";
@@ -177,6 +198,7 @@ fn main_shell() {
 
 
 fn main() {
+    // If you dont have gnome installed, remove everything in this main function and just leave the main_shell() functioncall
     if env::var("LAUNCHED_IN_TERMINAL").is_ok() {
         main_shell();
         return;
