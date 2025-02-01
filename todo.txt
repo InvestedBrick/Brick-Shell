@@ -1,4 +1,4 @@
+[X] handle CTRL-C
 [ ] aliases
-[ ] handle CTRL-C
 [ ] command tabbing / hinting
 [ ] command output redirection (into files etc)
