@@ -93,7 +93,7 @@ impl Hinter for FileCompleter {
                     if entry.is_ok() {
                         let e = entry.unwrap();
                         let mut file_name = e.file_name().to_string_lossy().to_string();
-                        if file_name.starts_with(input) {
+                        if file_name.starts_with(input) && !file_name.ends_with(".tmp") && !file_name.starts_with(".") && input != ""{
                             file_name = file_name[file_name.find(input).unwrap() + input.len()..].to_string();
                             if e.file_type().unwrap().is_dir(){
                                 return Some(file_name + "/");
