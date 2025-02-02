@@ -87,7 +87,15 @@ impl Completer for FileCompleter {
     type Candidate = String;
 
     fn complete(&self, line: &str, pos: usize, _ctx: &Context) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
-        let (start,files) = complete_dir_item(line, pos, _ctx);
+        let start;
+        let files;
+        if line != "" && (line.find(" ").is_none() || (line.rfind(" | ").is_some() && line.rfind(" ").unwrap()  == line.rfind("| ").unwrap() + 1)) {
+            start = line[..pos].rfind(' ').map_or(0, |i| i + 1);
+            let input = &line[start..pos];
+            files = read_commons(get_home_usr()).into_iter().filter(|s|s.starts_with(input)).collect::<Vec<String>>();
+        }else{
+            (start,files) = complete_dir_item(line, pos, _ctx);
+        }
 
         Ok((start, files))
     }
@@ -113,7 +121,7 @@ impl Highlighter for FileCompleter {
 impl Hinter for FileCompleter {
     type Hint = String;
     fn hint(&self, line: &str, pos: usize, _ctx: &Context) -> Option<String> {
-        if line != "" && (line.find(" ").is_none() || (line.rfind(" | ").is_some() && line.rfind(" ").unwrap() == pos)) {
+        if line != "" && (line.find(" ").is_none() || (line.rfind(" | ").is_some() && line.rfind(" ").unwrap() == line.rfind("| ").unwrap() + 1)) {
             let start = line[..pos].rfind(' ').map_or(0, |i| i + 1);
             let input = &line[start..pos];
             let commons = read_commons(get_home_usr());
