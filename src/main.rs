@@ -68,6 +68,7 @@ fn main_shell() {
         commons.push("cd".to_string());
         commons.push("ls".to_string());
         commons.push("exit".to_string());
+        commons.push("clear".to_string());
         commons.push("clear-history".to_string());
 
     }
