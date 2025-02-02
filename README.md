@@ -1,1 +1,30 @@
-A simple shell adapted from [Bubble Shell](https://github.com/JoshMcguigan/bubble-shell/) which is mostly a project to learn Rust for me
+**Brick Shell** is a small shell adapted from [Bubble Shell](https://github.com/JoshMcguigan/bubble-shell/) written in Rust
+
+## Features
+
+Brick Shell currently supports the following features:
+
+- Chaining commands through pipes
+- A custom `ls` implementation
+- Command history, which can be cleared using `clear-history`
+- Autocompletion using `TAB` for files, directories and commonly used commands
+
+    *Note: Commands get added to a list and are available for autocompletion upon restart of the shell*
+- Hinting what the shell will autocomplete to
+
+## Compiling && Running
+If you don't have Rust installed, you can get it [here](https://www.rust-lang.org/tools/install)
+
+Once you have Rust installed just run `cargo run` run compile and run.
+
+If you want to replace bash with this better shell but don't want to risk locking yourself out of your user because this shell does not support logins... (There might have been an incident)
+
+... You can just add the following to the end of your `~/.bashrc` file
+
+```
+<path to source dir>/target/debug/brick_shell
+sleep 0.2
+exit
+```
+
+*Note: I would only reccomend this if you are launching a new window of the shell, else this will just exit bash and you have no shell*
