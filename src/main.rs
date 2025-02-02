@@ -3,7 +3,6 @@ use std::env;
 use std::io::Write;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
-use autocomplete::FileCompleter;
 use rustyline::Editor;
 use users::{get_user_by_uid, get_current_uid};
 use colored::Colorize;
@@ -12,6 +11,9 @@ use os_pipe::pipe;
 use dirs::home_dir;
 use rustyline::error::ReadlineError;
 mod autocomplete;
+use autocomplete::FileCompleter;
+mod commons;
+use commons::{read_commons,write_commons,get_home_usr};
 
 fn split_args(command : &str) -> (&str, IntoIter<String>){
     if let Some((command_,args_)) = command.split_once(' '){
@@ -53,8 +55,22 @@ fn split_args(command : &str) -> (&str, IntoIter<String>){
 fn main_shell() {
     let user = get_user_by_uid(get_current_uid()).unwrap();
     let mut dir : String;
+    
+    let home_usr = get_home_usr();
+    let hist_file =  home_usr.clone() + "/brick_shell/brick_shell_history.txt";
 
-    let hist_file = "/home/".to_owned() + user.name().to_str().unwrap() + "/brick_shell_history.txt";
+    if !fs::exists(home_usr.clone() + "/brick_shell").unwrap(){ // create brick shel directory if it doesnt yet exist
+        fs::create_dir(home_usr.clone() + "/brick_shell").unwrap();
+    }
+    
+    let mut commons = read_commons(home_usr.clone());
+    if commons.is_empty(){
+        commons.push("cd".to_string());
+        commons.push("ls".to_string());
+        commons.push("exit".to_string());
+        commons.push("clear-history".to_string());
+
+    }
     let h = FileCompleter {};
     let mut rl = Editor::new().unwrap();
     rl.set_helper(Some(h));
@@ -62,6 +78,7 @@ fn main_shell() {
     if rl.load_history(&hist_file).is_err(){
         println!("Starting new history...");
     }
+
     loop {
         dir = env::current_dir().unwrap().display().to_string();
         let prompt = format!("({})[{}] > ",user.name().to_str().unwrap().green().bold(),dir.blue().bold());
@@ -85,7 +102,6 @@ fn main_shell() {
         rl.add_history_entry(&input).unwrap();
         let mut commands = input.trim().split(" | ").peekable();
         let mut prev_command:Option<Child>  = None;
-
         while let Some(command) = commands.next() {
             let (command,args) = split_args(command.trim());
         
@@ -102,7 +118,7 @@ fn main_shell() {
 
                     prev_command = None;
                 },
-                "exit" => {rl.append_history(&hist_file).unwrap();return;},
+                "exit" => {rl.append_history(&hist_file).unwrap(); write_commons(home_usr, commons);return;},
                 "clear-history" => {
                     if rl.clear_history().is_err() {
                         println!("Failed to clear history");
@@ -182,7 +198,7 @@ fn main_shell() {
                     .spawn();
                 
                 match output {
-                    Ok(output) => {prev_command = Some(output);},
+                    Ok(output) => {prev_command = Some(output); if !commons.contains(&command.to_string()) {commons.push(command.to_string() )};}, // Only push to commons if true command 
                     Err(_e) => {prev_command = None; if command.to_string() != "" {eprintln!("Command '{}' was not found!",command.to_string())};}
                     }
                 }
