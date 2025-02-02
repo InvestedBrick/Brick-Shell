@@ -27,4 +27,4 @@ sleep 0.2
 exit
 ```
 
-*Note: I would only reccomend this if you are launching a new window of the shell, else this will just exit bash and you have no shell*
+*Note: I would only recomend this if you are launching a new window of the shell, else this will just exit bash and you have no shell*
