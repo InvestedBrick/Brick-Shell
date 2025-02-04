@@ -2,3 +2,4 @@
 [X] command tabbing / hinting
 [X] aliases
 [ ] command output redirection (into files etc)
+[ ] command chaining though &&
