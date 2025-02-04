@@ -14,6 +14,9 @@ mod autocomplete;
 use autocomplete::FileCompleter;
 mod commons;
 use commons::{read_commons,write_commons,get_home_usr};
+use std::collections::HashMap;
+mod aliases;
+use aliases::{read_aliases,write_aliases};
 
 fn split_args(command : &str) -> (&str, IntoIter<String>){
     if let Some((command_,args_)) = command.split_once(' '){
@@ -58,8 +61,11 @@ fn main_shell() {
     
     let home_usr = get_home_usr();
     let hist_file =  home_usr.clone() + "/brick_shell/brick_shell_history.txt";
+    let alias_file = home_usr.clone() + "/brick_shell/brick_shell_aliases.txt";
 
-    if !fs::exists(home_usr.clone() + "/brick_shell").unwrap(){ // create brick shel directory if it doesnt yet exist
+    let mut aliases = read_aliases(alias_file.clone());
+    let mut perm_aliases = HashMap::<String,bool>::new();
+    if !fs::exists(home_usr.clone() + "/brick_shell").unwrap(){ // create brick shel directory if it doesn't yet exist
         fs::create_dir(home_usr.clone() + "/brick_shell").unwrap();
     }
     
@@ -103,9 +109,11 @@ fn main_shell() {
         rl.add_history_entry(&input).unwrap();
         let mut commands = input.trim().split(" | ").peekable();
         let mut prev_command:Option<Child>  = None;
-        while let Some(command) = commands.next() {
+        let mut read_from_map = false;
+        let mut alias_key = String::new();
+        while let Some(command) = if read_from_map {aliases.get(&alias_key).map(|s|s.as_str())} else {commands.next()} {
             let (command,args) = split_args(command.trim());
-        
+            read_from_map = false;
             match command {
 
                 "cd" => {
@@ -119,16 +127,52 @@ fn main_shell() {
 
                     prev_command = None;
                 },
-                "exit" => {rl.append_history(&hist_file).unwrap(); write_commons(home_usr, commons);return;},
+                "exit" => {
+                    rl.append_history(&hist_file).unwrap();
+                    write_commons(home_usr, commons);
+                    write_aliases(alias_file, &aliases.into_iter().filter(|(key,_)| perm_aliases.get(key).copied().unwrap_or(false)).collect());
+                    return;
+                },
                 "clear-history" => {
                     if rl.clear_history().is_err() {
-                        println!("Failed to clear history");
+                        eprintln!("Failed to clear history");
                     }
                     
                     fs::remove_file(&hist_file).unwrap();
                 }
+                "alias" => {
+                    let mut args = args.peekable();
+
+                    let arg = args.peek().map_or(String::new(), |x| x.to_string());
+                    if !(arg == "-t" || arg == "-p" || arg == ""){
+                        eprintln!("Invalid Argument! Can only use '-t' for temporary and '-p' for permanent aliases");
+                        continue;
+                    }
+                    args.next();
+                    let perm = arg == "-p";
+
+                    let alias = args.next().unwrap_or_default();
+                    if alias.is_empty() {
+                        eprintln!("Expected alias");
+                        return;
+                    }
+
+                    let alias_content = args.next().unwrap_or_default();
+                    if alias_content.is_empty() {
+                        eprintln!("Expected what '{}' is supposed to be an alias for", alias);
+                        return;
+                    }
+
+                    aliases.insert(alias.clone(), alias_content);
+                    perm_aliases.insert(alias, perm);
+                        
+                }
                 "ls" => {
                     let arg = args.peekable().peek().map_or(String::new(), |x| x.to_string());
+                    if !(arg == "-e" || arg == "-a" || arg == ""){
+                        eprintln!("Invalid Argument! Can only use '-e' for extended and '-a' for all-view");
+                        continue;
+                    }
                     let extended = arg == "-e";
                     let all = arg == "-a";
                     let files = fs::read_dir(&dir).unwrap();
@@ -200,7 +244,19 @@ fn main_shell() {
                 
                 match output {
                     Ok(output) => {prev_command = Some(output); if !commons.contains(&command.to_string()) {commons.push(command.to_string() )};}, // Only push to commons if true command 
-                    Err(_e) => {prev_command = None; if command.to_string() != "" {eprintln!("Command '{}' was not found!",command.to_string())};}
+                    Err(_e) => {
+                        prev_command = None; 
+                        if aliases.contains_key(command){
+                            read_from_map = true;
+                            alias_key = command.to_string();
+                            continue;
+                        }else{
+
+                            if command.to_string() != "" 
+                            {
+                                eprintln!("Command '{}' was not found!",command.to_string())};
+                            }
+                        }
                     }
                 }
             }
