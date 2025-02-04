@@ -65,6 +65,10 @@ fn main_shell() {
 
     let mut aliases = read_aliases(alias_file.clone());
     let mut perm_aliases = HashMap::<String,bool>::new();
+
+    for key in aliases.keys(){
+        perm_aliases.insert(key.to_string(), true);
+    }
     if !fs::exists(home_usr.clone() + "/brick_shell").unwrap(){ // create brick shel directory if it doesn't yet exist
         fs::create_dir(home_usr.clone() + "/brick_shell").unwrap();
     }
