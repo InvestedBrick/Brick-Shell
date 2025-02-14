@@ -1,5 +1,6 @@
 [X] handle CTRL-C
 [X] command tabbing / hinting
 [X] aliases
+[X] restart
 [ ] command output redirection (into files etc)
 [ ] command chaining though &&
