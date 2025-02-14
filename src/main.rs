@@ -251,13 +251,13 @@ fn main_shell() {
                     Err(_e) => {
                         prev_command = None; 
                         if aliases.contains_key(command){
+                            if !commons.contains(&command.to_string()) {commons.push(command.to_string());} // push custom commands
                             read_from_map = true;
                             alias_key = command.to_string();
                             continue;
                         }else{
 
-                            if command.to_string() != "" 
-                            {
+                            if command.to_string() != "" {
                                 eprintln!("Command '{}' was not found!",command.to_string())};
                             }
                         }
