@@ -55,7 +55,7 @@ fn split_args(command : &str) -> (&str, IntoIter<String>){
 
 }
 
-fn main_shell() {
+fn main_shell() -> bool{
     let user = get_user_by_uid(get_current_uid()).unwrap();
     let mut dir : String;
     
@@ -78,6 +78,7 @@ fn main_shell() {
         commons.push("cd".to_string());
         commons.push("ls".to_string());
         commons.push("exit".to_string());
+        commons.push("restart".to_string());
         commons.push("clear".to_string());
         commons.push("clear-history".to_string());
 
@@ -131,11 +132,17 @@ fn main_shell() {
 
                     prev_command = None;
                 },
-                "exit" => {
+                "exit"  => {
                     rl.append_history(&hist_file).unwrap();
                     write_commons(home_usr, commons);
                     write_aliases(alias_file, &aliases.into_iter().filter(|(key,_)| perm_aliases.get(key).copied().unwrap_or(false)).collect());
-                    return;
+                    return false;
+                },
+                "restart"  => { // not pretty but I dont wanna deal with borrowing command stuff
+                    rl.append_history(&hist_file).unwrap();
+                    write_commons(home_usr, commons);
+                    write_aliases(alias_file, &aliases.into_iter().filter(|(key,_)| perm_aliases.get(key).copied().unwrap_or(false)).collect());
+                    return true;
                 },
                 "clear-history" => {
                     if rl.clear_history().is_err() {
@@ -158,13 +165,13 @@ fn main_shell() {
                     let alias = args.next().unwrap_or_default();
                     if alias.is_empty() {
                         eprintln!("Expected alias");
-                        return;
+                        continue;
                     }
 
                     let alias_content = args.next().unwrap_or_default();
                     if alias_content.is_empty() {
                         eprintln!("Expected what '{}' is supposed to be an alias for", alias);
-                        return;
+                        continue;
                     }
 
                     aliases.insert(alias.clone(), alias_content);
@@ -277,7 +284,7 @@ fn main_shell() {
 fn main() {
     // If you dont have gnome installed, remove everything in this main function and just leave the main_shell() functioncall
     if env::var("LAUNCHED_IN_TERMINAL").is_ok() {
-        main_shell();
+        while main_shell(){println!("Restarted successfully")}
         return;
     }
 
