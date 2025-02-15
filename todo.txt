@@ -2,5 +2,5 @@
 [X] command tabbing / hinting
 [X] aliases
 [X] restart
+[X] command chaining though &&
 [ ] command output redirection (into files etc)
-[ ] command chaining though &&
