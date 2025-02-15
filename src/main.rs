@@ -138,27 +138,25 @@ fn main_shell() -> bool{
         rl.add_history_entry(&input).unwrap();
         //let commands_chain = input.trim().split(" && ").peekable();
         let commands: Vec<String> = split_with_delimiter(&input.trim(), " && ");
-        println!("{:?}",commands);
         for c in commands {
             let split_iter:Vec<String> = split_with_delimiter(&c.trim(), " | ");
             let mut split_commands = split_iter.into_iter().peekable();
             
             let mut prev_command: Option<Child>  = None;
-            
+
             while let Some(command) = alias_vec.pop().or_else(||split_commands.next())  {
                 let (command,args) = split_args(command.trim());
-                println!("running '{}' with args: {:?}",command,args);
                 match command {
-                
+
                     "cd" => {
                         let new_dir = args.peekable().peek().map_or(home_dir().unwrap().display().to_string() , |x| x.to_string());
-                    
+
                         let path = Path::new(&new_dir);
-                        
+
                         if let Err(e) = env::set_current_dir(&path){
                             eprintln!("{}",e);
                         }
-                    
+
                         prev_command = None;
                     },
                     "exit"  => {
@@ -177,12 +175,12 @@ fn main_shell() -> bool{
                         if rl.clear_history().is_err() {
                             eprintln!("Failed to clear history");
                         }
-                        
+
                         fs::remove_file(&hist_file).unwrap();
                     }
                     "alias" => {
                         let mut args = args.peekable();
-                    
+
                         let arg = args.peek().map_or(String::new(), |x| x.to_string());
                         if !(arg == "-t" || arg == "-p" || arg == ""){
                             eprintln!("Invalid Argument! Can only use '-t' for temporary and '-p' for permanent aliases");
@@ -190,22 +188,22 @@ fn main_shell() -> bool{
                         }
                         args.next();
                         let perm = arg == "-p";
-                        
+
                         let alias = args.next().unwrap_or_default();
                         if alias.is_empty() {
                             eprintln!("Expected alias");
                             continue;
                         }
-                        
+
                         let alias_content = args.next().unwrap_or_default();
                         if alias_content.is_empty() {
                             eprintln!("Expected what '{}' is supposed to be an alias for", alias);
                             continue;
                         }
-                    
+
                         aliases.insert(alias.clone(), alias_content);
                         perm_aliases.insert(alias, perm);
-                            
+
                     }
                     "ls" => {
                         let arg = args.peekable().peek().map_or(String::new(), |x| x.to_string());
@@ -229,7 +227,7 @@ fn main_shell() -> bool{
                                 }
                             }else if file_type.is_file() {
                                 if !file_name.ends_with(".tmp") || all{
-                                    
+
                                     if starts_with_dot && (extended || all){
                                         ls_output.push_str(&format!("{}\n",file_name));
                                     }
@@ -249,9 +247,9 @@ fn main_shell() -> bool{
                         }else{
                             let (reader,mut writer) = pipe().expect("Pipe failed");
                             writer.write_all(ls_output.as_bytes()).unwrap();
-                            
+
                             drop(writer);
-                            
+
                             prev_command = Some(
                                 Command::new("cat") 
                                 .stdin(Stdio::from(reader))
@@ -259,12 +257,12 @@ fn main_shell() -> bool{
                                 .spawn()
                                 .expect("Failed to spawn command")
                             );
-                            
-                            
+
+
                         }
                     },
                     command => {
-                        
+
                         let stdin = prev_command
                         .map_or(
                                 Stdio::inherit(),
@@ -275,7 +273,7 @@ fn main_shell() -> bool{
                             } else {
                                 Stdio::inherit()
                             };
-                            
+
                             let output = Command::new(command)
                             .args(args)
                             .stdin(stdin)
@@ -295,7 +293,7 @@ fn main_shell() -> bool{
                                 }
                                 continue;
                             }else{
-                                
+
                                 if command.to_string() != "" {
                                     eprintln!("Command '{}' was not found!",command.to_string())};
                                 }
