@@ -13,6 +13,7 @@ Brick Shell currently supports the following features:
     *Note: Commands get added to a list and are available for autocompletion upon restart of the shell*
 - Hinting what the shell will autocomplete to
 - aliases using `alias [-p / -t] [name] "alias"` Where -p indicates permanent aliases and -t only aliases for this session.
+- Chaining commands by adding ` && ` betweem them
 
 You can restart the shell and by that also reload aliases etc by using `restart`
 ## Compiling && Running
