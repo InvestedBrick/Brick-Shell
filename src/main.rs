@@ -350,12 +350,17 @@ fn main_shell() -> bool{
 
 
 fn main() {
-    // If you dont have gnome installed, remove everything in this main function and just leave the main_shell() functioncall
+
     if env::var("LAUNCHED_IN_TERMINAL").is_ok() {
         while main_shell(){println!("Restarted successfully")}
         return;
     }
 
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 1 && args[1] == "--in-shell"{
+        while main_shell(){println!("Restarted successfully")}
+        return;
+    }
     let current_exe = env::current_exe().unwrap();
 
     let result = Command::new("gnome-terminal")
