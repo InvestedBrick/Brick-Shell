@@ -17,6 +17,14 @@ use commons::{read_commons,write_commons,get_home_usr};
 use std::collections::HashMap;
 mod aliases;
 use aliases::{read_aliases,write_aliases};
+use strip_ansi_escapes::strip_str;
+
+pub fn r_pad(s: String,padded_to : usize) -> String {
+    let len = padded_to - strip_str(&s).len();
+    s + &"                                                                                           "[0..len]  // if you need more padding, idc
+}
+
+
 pub fn split_with_delimiter(s: &str, delimiter: &str) -> Vec<String> {
     let mut result:Vec<String> = Vec::new();
     if !s.contains(delimiter){
@@ -243,7 +251,36 @@ fn main_shell() -> bool{
                         }
                         // No pipe -> print
                         if split_commands.peek().is_none() {
-                            print!("{}",ls_output);
+                            let n_items = ls_output.lines().count();
+                            if n_items > 10 {
+                                // multiple cols
+                                let items: Vec<String> = ls_output.split("\n").map(|s| s.to_string()).collect();
+                                let mut longest_len = 0;
+                                for item in &items{
+                                    if strip_str(&item).len() > longest_len{
+                                        longest_len = strip_str(&item).len();
+                                    }
+                                }
+                                
+                                let padded_items: Vec<String> = items.into_iter().map(|x| r_pad(x, longest_len + 5)).collect();
+
+                                let cols = if n_items / 10 < 5 {n_items / 10} else {5};
+
+                                let rows = (n_items / cols) + 1;
+                                
+                                //for item in padded_items{
+                                //    println!("{}'",item)
+                                //}
+                                for i in 0..rows{
+                                    for j in 0..cols {
+                                        print!("{}", padded_items[i + j * rows])
+                                    }
+                                    println!();
+                                }
+
+                            }else{
+                                print!("{}",ls_output);
+                            }
                         }else{
                             let (reader,mut writer) = pipe().expect("Pipe failed");
                             writer.write_all(ls_output.as_bytes()).unwrap();
