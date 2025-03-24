@@ -21,6 +21,9 @@ If you don't have Rust installed, you can get it [here](https://www.rust-lang.or
 
 Once you have Rust installed just run `cargo run` run compile and run.
 
+You can also run the executable with the flag `--in-shell`, which then will not create a new window but rather just spawn the shell in your current terminal
+(useful for anyone using this on a CLI distro)
+
 If you want to replace bash with this better shell but don't want to risk locking yourself out of your user because this shell does not support logins... (There might have been an incident)
 
 ... You can just add the following to the end of your `~/.bashrc` file
