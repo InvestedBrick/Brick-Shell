@@ -289,13 +289,6 @@ fn main_shell() -> bool{
                                     padded_cols.push(r_pad_array(&items[(col_x_rows)..(col_x_rows + rows) ], pad + 3));
                                 }
 
-                                //let padded_items: Vec<String> = items.into_iter().map(|x| r_pad(x, longest_len + 5)).collect();
-
-
-                                
-                                //for item in padded_items{
-                                //    println!("{}'",item)
-                                //}
                                 for i in 0..rows{
                                     let mut line = String::new();
                                     for col in &padded_cols{
