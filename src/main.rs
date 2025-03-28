@@ -24,7 +24,18 @@ pub fn r_pad(s: String,padded_to : usize) -> String {
     s + &"                                                                                           "[0..len]  // if you need more padding, idc
 }
 
-
+pub fn r_pad_array(vec: &[String],padded_to: usize) -> Vec<String>{
+    vec.iter().map(|s| r_pad(s.to_string(),padded_to)).collect()
+}
+pub fn find_longest(strs :&[String]) -> usize {
+    let mut longest = 0;
+    for str in strs{
+        if strip_str(str).len() > longest{
+            longest = strip_str(str).len();
+        }
+    }
+    longest
+}
 pub fn split_with_delimiter(s: &str, delimiter: &str) -> Vec<String> {
     let mut result:Vec<String> = Vec::new();
     if !s.contains(delimiter){
@@ -254,28 +265,43 @@ fn main_shell() -> bool{
                             let n_items = ls_output.lines().count();
                             if n_items > 10 {
                                 // multiple cols
-                                let items: Vec<String> = ls_output.split("\n").map(|s| s.to_string()).collect();
+                                let mut items: Vec<String> = ls_output.split("\n").map(|s| s.to_string()).collect();
                                 let mut longest_len = 0;
                                 for item in &items{
                                     if strip_str(&item).len() > longest_len{
                                         longest_len = strip_str(&item).len();
                                     }
                                 }
+                                let cols = if n_items / 10 < 5 {n_items / 10} else {5}; 
                                 
-                                let padded_items: Vec<String> = items.into_iter().map(|x| r_pad(x, longest_len + 5)).collect();
-
-                                let cols = if n_items / 10 < 5 {n_items / 10} else {5};
-
                                 let rows = (n_items / cols) + 1;
+                                
+                                let len = items.len();
+
+                                for _ in len..(rows * cols) {
+                                    items.push(String::new()); // prevent accessing non-exsiting strings
+                                }
+                                let mut padded_cols: Vec<Vec<String>> = Vec::new();
+                                
+                                for col in 0..cols {
+                                    let col_x_rows = col * rows;
+                                    let pad = find_longest(&items[(col_x_rows)..(col_x_rows + rows) ]);
+                                    padded_cols.push(r_pad_array(&items[(col_x_rows)..(col_x_rows + rows) ], pad + 3));
+                                }
+
+                                //let padded_items: Vec<String> = items.into_iter().map(|x| r_pad(x, longest_len + 5)).collect();
+
+
                                 
                                 //for item in padded_items{
                                 //    println!("{}'",item)
                                 //}
                                 for i in 0..rows{
-                                    for j in 0..cols {
-                                        print!("{}", padded_items[i + j * rows])
+                                    let mut line = String::new();
+                                    for col in &padded_cols{
+                                        line.push_str(&col[i]);
                                     }
-                                    println!();
+                                    println!("{}",line);
                                 }
 
                             }else{
