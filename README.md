@@ -19,19 +19,23 @@ You can restart the shell and by that also reload aliases etc by using `restart`
 ## Compiling && Running
 If you don't have Rust installed, you can get it [here](https://www.rust-lang.org/tools/install)
 
-Once you have Rust installed just run `cargo run` run compile and run.
+Once you have Rust installed just run `cargo build` to build the executable.
 
-You can also run the executable with the flag `--in-shell`, which then will not create a new window but rather just spawn the shell in your current terminal
-(useful for anyone using this on a CLI distro)
+To use this shell, you need to do the following things: 
 
-If you want to replace bash with this better shell but don't want to risk locking yourself out of your user because this shell does not support logins... (There might have been an incident)
+1. run `bash move_shell.bash` to copy the executable to `/bin/`
 
-... You can just add the following to the end of your `~/.bashrc` file
+2. run `chsh` and enter `/bin/brick_shell` as your new shell path
 
-```
-<path to source dir>/target/debug/brick_shell
-sleep 0.2
-exit
-```
+3. go into `/etc/passwd` and change the line that looks like `{user}:x:1000:1000:{user}:/home/{user}:/bin/{your active shell}`
+to `{user}:x:1000:1000:{user}:/home/{user}:/bin/brick_shell`
 
-*Note: I would only recomend this if you are launching a new window of the shell, else this will just exit bash and you have no shell*
+(`{user}` denotes the currently active username)
+
+On Ubuntu if you want the shell to startup when you click your terminal do the following: 
+Right-click on the terminal icon -> Preferences -> Select a profile (your start profile should just be `Unnamed`) -> Command
+
+Here check `Run command as login shell` and `Run custom command instead of my shell` 
+
+as the command you enter `/bin/brick_shell`
+
