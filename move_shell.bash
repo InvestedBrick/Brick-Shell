@@ -1,0 +1,1 @@
+sudo cp target/debug/brick_shell /bin/brick_shell
