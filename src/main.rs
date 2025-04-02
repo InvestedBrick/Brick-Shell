@@ -18,7 +18,6 @@ use std::collections::HashMap;
 mod aliases;
 use aliases::{read_aliases,write_aliases};
 use strip_ansi_escapes::strip_str;
-
 pub fn r_pad(s: String,padded_to : usize) -> String {
     let len = padded_to - strip_str(&s).len();
     s + &"                                                                                           "[0..len]  // if you need more padding, idc
@@ -369,27 +368,36 @@ fn main_shell() -> bool{
 
 
 fn main() {
+    env::set_var("SHELL", env::current_exe().unwrap());
+    env::set_var("BRICK_SHELL_VERSION", "0.1.0");
+    // Check if this shell was launched as a login shell
+    let is_login_shell = env::args()
+        .nth(0)
+        .map(|arg| arg.starts_with('-'))
+        .unwrap_or(false);
 
-    if env::var("LAUNCHED_IN_TERMINAL").is_ok() {
-        while main_shell(){println!("Restarted successfully")}
-        return;
-    }
 
-    let args: Vec<String> = env::args().collect();
-    if args.len() > 1 && args[1] == "--in-shell"{
-        while main_shell(){println!("Restarted successfully")}
-        return;
-    }
-    let current_exe = env::current_exe().unwrap();
+    // If it's a login shell, source system-wide and user profile scripts
+    if is_login_shell {
+        Command::new("sh")
+            .arg("-c")
+            .arg("source /etc/profile")
+            .status()
+            .ok();
 
-    let result = Command::new("gnome-terminal")
-        .arg("--")
-        .arg(format!("{}",current_exe.to_str().unwrap()))
-        .env("LAUNCHED_IN_TERMINAL", "1")
-        .spawn();
-
-        match result {
-            Ok(_) => println!("Launched in a new terminal successfully!"),
-            Err(e) => eprintln!("Failed to launch a new terminal: {}", e),
+        if let Some(home) = home_dir() {
+            let user_profile = format!("{}/.profile", home.display());
+            if Path::new(&user_profile).exists() {
+                Command::new("sh")
+                    .arg("-c")
+                    .arg(format!("source {}", user_profile))
+                    .status()
+                    .ok();
+            }
         }
+    }
+    while main_shell() {
+        println!("Restarted successfully");
+    }
+    return;
 }
