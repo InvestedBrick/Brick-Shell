@@ -136,7 +136,7 @@ fn main_shell() -> bool{
 
     loop {
         dir = env::current_dir().unwrap().display().to_string();
-        let prompt = format!("({})[{}] > ",user.name().to_str().unwrap().green().bold(),dir.blue().bold());
+        let prompt = format!("╔({})-[{}] \n╚═{} ",user.name().to_str().unwrap().green().bold(),dir.blue().bold(),">".bold());
 
         let line =  rl.readline(&prompt);
 
