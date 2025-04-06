@@ -369,7 +369,20 @@ fn main_shell() -> bool{
 
 fn main() {
     env::set_var("SHELL", env::current_exe().unwrap());
-    env::set_var("BRICK_SHELL_VERSION", "0.1.0");
+    if env::args().nth(1).is_some() {
+        let arg = env::args().nth(1).unwrap();
+        if arg == "-h" || arg == "--help" {
+            println!("Usage: brick_shell [options]");
+            println!("Options:");
+            println!("  -v, --version Show version information");
+            println!("  -h, --help    Show this help message");
+            return;
+        }
+        if arg == "-v" || arg == "--version" {
+            println!("v0.1");
+            return;
+        }
+    }
     // Check if this shell was launched as a login shell
     let is_login_shell = env::args()
         .nth(0)
@@ -396,6 +409,8 @@ fn main() {
             }
         }
     }
+
+
     while main_shell() {
         println!("Restarted successfully");
     }
