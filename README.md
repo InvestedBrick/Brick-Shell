@@ -1,4 +1,4 @@
-a**Brick Shell** is a small shell adapted from [Bubble Shell](https://github.com/JoshMcguigan/bubble-shell/) written in Rust
+**Brick Shell** is a small shell adapted from [Bubble Shell](https://github.com/JoshMcguigan/bubble-shell/) written in Rust
 
 *Note: This shell has only been tested un Ubuntu and MacOS Sequoia 15.5, if you are running another OS you might have to make adjustments*
 ## Features
