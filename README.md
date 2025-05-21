@@ -1,6 +1,6 @@
 **Brick Shell** is a small shell adapted from [Bubble Shell](https://github.com/JoshMcguigan/bubble-shell/) written in Rust
 
-*Note: This shell has only been tested un Ubuntu, if you are running another OS you might have to make adjustments*
+*Note: This shell has only been tested un Ubuntu and MacOS Sequoia 15.5, if you are running another OS you might have to make adjustments*
 ## Features
 
 Brick Shell currently supports the following features:
@@ -39,3 +39,17 @@ Here check `Run command as login shell` and `Run custom command instead of my sh
 
 as the command you enter `/bin/brick_shell`
 
+---
+## MacOS
+
+To use this shell on Mac, it's done a teeny tiny bit differently.
+
+1. Edit line 6 of `src/commons.rs` so it says `"/Users/<username here>/.to_owned()`
+
+2. Run `cargo bulild` to compile your shell.
+
+4. Now you do `nano /etc/shells` and add `<your home directory here>/Brick-Lang/target/debug/brick_shell`.
+
+3. When in the MacOS Terminal, press `Command + ,`
+
+5. Now tick `Command` instead of `Default shell` and paste `<your home directory here>/Brick-Lang/target/debug/brick_shell`.
