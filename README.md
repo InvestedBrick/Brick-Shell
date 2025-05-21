@@ -1,4 +1,4 @@
-**Brick Shell** is a small shell adapted from [Bubble Shell](https://github.com/JoshMcguigan/bubble-shell/) written in Rust
+a**Brick Shell** is a small shell adapted from [Bubble Shell](https://github.com/JoshMcguigan/bubble-shell/) written in Rust
 
 *Note: This shell has only been tested un Ubuntu and MacOS Sequoia 15.5, if you are running another OS you might have to make adjustments*
 ## Features
@@ -42,9 +42,9 @@ as the command you enter `/bin/brick_shell`
 ---
 ## MacOS
 
-To use this shell on Mac, it's done a teeny tiny bit differently.
+To use this shell on Mac, there are a few more steps to follow.
 
-1. Edit line 6 of `src/commons.rs` so it says `"/Users/<username here>/.to_owned()`
+1. Change line 6 of `src/commons.rs` from `"/home/".to_owned() + get_user_by_uid(get_current_uid()).unwrap().name().to_str().unwrap()` to `"/Users/<username here>/.to_owned()`
 
 2. Run `cargo bulild` to compile your shell.
 
