@@ -328,9 +328,14 @@ fn main_shell() -> bool{
                             } else {
                                 Stdio::inherit()
                             };
+                            let mut args: Vec<String> = args.collect();
+
+                            if command == "git" && args.get(0).map(String::as_str) == Some("ocmmit") {
+                                args[0] = "commit".to_string();
+                            }
 
                             let output = Command::new(command)
-                            .args(args)
+                            .args(args.into_iter())
                             .stdin(stdin)
                         .stdout(stdout)
                         .spawn();
